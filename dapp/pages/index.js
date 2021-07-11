@@ -1,56 +1,120 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
+import 'font-awesome/css/font-awesome.min.css';
 import ProposalCreatedCard from '../components/ProposalCreatedCard';
 import ProposalVotedForCard from '../components/ProposalVotedForCard';
+import {
+  getProposalCreateObjects,
+  getProposalVoteObjects,
+} from '../repo/getData';
+import config from '../config';
+function Home({ proposalCreateObjects, proposalVoteObjects }) {
+  const [address, setAddress] = useState('');
+  const [showAddress, setShowAddress] = useState(config.demoDelegator);
+  const [_proposalCreateObjects, setProposalCreateObjects] = useState(
+    proposalCreateObjects
+  );
+  const [_proposalVoteObjects, setProposalVoteObjects] = useState(
+    proposalVoteObjects
+  );
+  const [loading, setLoading] = useState(false);
 
-class Home extends Component {
-  filterProposalCreateCards() {
+  const filterProposalCreateCards = () => {
     let totalCards = [];
-    for (var i = 0; i < 2; i++) {
-      totalCards.push(<ProposalCreatedCard />);
+    for (var i = 0; i < _proposalCreateObjects.length; i++) {
+      let p = _proposalCreateObjects[i];
+      totalCards.push(
+        <ProposalCreatedCard
+          key={i}
+          title={p.title}
+          createdAt={p.createdAt}
+          endsAt={p.endsAt}
+        />
+      );
     }
     return totalCards;
-  }
+  };
 
-  filterProposalVotedCards() {
+  const filterProposalVotedCards = () => {
     let totalCards = [];
-    for (var i = 0; i < 4; i++) {
-      totalCards.push(<ProposalVotedForCard />);
+    for (var i = 0; i < _proposalVoteObjects.length; i++) {
+      let p = _proposalVoteObjects[i];
+      totalCards.push(
+        <ProposalVotedForCard
+          key={i}
+          title={p.title}
+          id={p.proposalId}
+          votes={p.numOfVotes}
+          vote={p.vote}
+        />
+      );
     }
     return totalCards;
-  }
+  };
 
-  render() {
-    return (
-      <div className='bg-gray-800 min-h-screen'>
-        {/* top black bar */}
-        <div className='bg-black h-20'></div>
-        {/* delegate search bar & button  */}
-        <div className='container mx-auto'>
-          <form className='mt-8'>
-            <input
-              placeholder='Delegate address'
-              className='h-9 rounded-md outline-none w-2/4 px-3'
-            ></input>
-            <button className='ml-4 px-8 h-9 rounded-md font-bold text-white text-lg bg-tinty'>
-              SEARCH
-            </button>
-          </form>
-          <div className='mt-8 text-2xl text-white font-semibold'>
-            Proposals Created
-          </div>
-          <div className='grid grid-cols-2 w-170'>
-            {this.filterProposalCreateCards()}
-          </div>
-          <div className='mt-8 text-2xl text-white font-semibold'>
-            Proposals Voted For
-          </div>
-          <div className='grid grid-cols-2 w-170'>
-            {this.filterProposalVotedCards()}
-          </div>
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const proposalCreateObjects = await getProposalCreateObjects(address);
+    const proposalVoteObjects = await getProposalVoteObjects(address);
+
+    setProposalCreateObjects(proposalCreateObjects);
+    setProposalVoteObjects(proposalVoteObjects);
+    setShowAddress(address);
+    setAddress('');
+    setLoading(false);
+  };
+
+  return (
+    <div className='bg-gray-800 min-h-screen'>
+      {/* top black bar */}
+      <div className='bg-black h-20'></div>
+      {/* delegate search bar & button  */}
+      <div className='container mx-auto'>
+        <form className='mt-8' onSubmit={onSubmit}>
+          <input
+            value={address}
+            placeholder='Delegator address'
+            className='h-9 rounded-md outline-none w-2/4 px-3'
+            onChange={(e) => setAddress(e.target.value)}
+          ></input>
+          <button
+            type='submit'
+            className='ml-4 px-8 h-9 rounded-md font-bold text-white text-lg bg-tinty'
+          >
+            {loading ? (
+              <i className='fa fa-lg fa-circle-o-notch fa-spin text-white'></i>
+            ) : (
+              <span>Search</span>
+            )}
+          </button>
+        </form>
+        <div className='mt-2 text-yellow-400 text-sm'>{showAddress}</div>
+        <div className='mt-8 text-2xl text-white font-semibold'>
+          Proposals Created
         </div>
+        <div className='grid grid-cols-1'>{filterProposalCreateCards()}</div>
+        <div className='mt-8 text-2xl text-white font-semibold'>
+          Proposals Voted For
+        </div>
+        <div className='grid grid-cols-1'>{filterProposalVotedCards()}</div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+export async function getStaticProps(context) {
+  const proposalCreateObjects = await getProposalCreateObjects(
+    config.demoDelegator
+  );
+  const proposalVoteObjects = await getProposalVoteObjects(
+    config.demoDelegator
+  );
+  return {
+    props: {
+      proposalCreateObjects,
+      proposalVoteObjects,
+    },
+  };
 }
 
 export default Home;

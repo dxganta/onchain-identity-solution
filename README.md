@@ -24,5 +24,20 @@
     wont matter shit. So a good fix will be weighted testing, with more recent tests having a higher weight and older tests having a lower one.
 
 
-### Showing previous voting records of user
-For no. 1, in the list, to show the previous voting records of any user, use the VoteCast() event that emitted by the GovernorAlpha contract whenever an user casts a vote. Use the graph api to show the votes on the UI.
+# POF Tests
+1. On every test there will be 10 questions
+2. You must have staked SOV to participate in the test (optional)
+3. You can attempt the test only once on test day
+4. Tests will be held periodically with questions to be decided by the admin team
+5. A test will have a fixed time interval (starting time & ending time) between which a user has to do it.
+6. A list of addresses need to be set as admins at contract inception, and every week a person among them will be chosen to figure out the questions for the upcoming test
+
+
+
+## Setup
+//TODO: Launch the frontend dapp on heroku
+Replace the cvKey in next.config.js with your covalent api key
+
+
+## Tests
+1. Is the userToAnswers mapping in the Test Struct reset, everytime a new test is added

@@ -9,7 +9,11 @@ import "../deps/Ownable.sol";
 /// @dev This will be a multiple choice question test
 contract ProofOfKnowledge is Ownable{
     using SafeMathUpgradeable for uint;
+    using SafeMathUpgradeable for uint8;
     using AddressUpgradeable for address;
+
+    event TestAdded(uint id, uint startingTime, uint endingTime, string[q] questions);
+    event AnswersUpdated(uint testId, uint8[q] answers);
 
     struct Test {
         uint id;
@@ -18,13 +22,20 @@ contract ProofOfKnowledge is Ownable{
         string[q] questions;
     }
 
+    uint8 public constant decimals = 6;
     uint public currentTestId = 0;
     uint16 public constant q = 2;  // t being the total number of questions for current Test
     Test public currentTest;
     uint8[q] private answers; // answers for the last finished test
+    bool public answersUpdated = false;
 
-    mapping(bytes32=>uint8[q]) userToAnswers; // mapping of a user to their answers for the current test
-    mapping(bytes32=>uint8) userLimits; // mapping for limiting users to answer tests & update score only once per test
+    mapping(bytes32=>uint8[q]) public userToAnswers; // mapping of a user to their answers for the current test
+    mapping(bytes32=>uint8) public userLimits; // mapping for limiting users to answer tests & update score only once per test
+    mapping(address=>uint) public userToScore; // current score of user (score is in 10**6 decimals)
+
+    // will be divided by 1000 (so 700 means 70%)
+    uint public alpha = 700; // percentage of previous score
+    uint public beta = 300; // percentage of new score
 
     modifier testOver() {
         require(now > currentTest.endingTime, "Wait! Test is still not over");
@@ -33,26 +44,23 @@ contract ProofOfKnowledge is Ownable{
 
     // @info use this function to add a new test for the upcoming week
     // @dev remove the last test & add a new test
-    function addTest(string[q] memory _questions, uint _startingTime, uint _endingTime) external onlyOwner {
+    function addTest(string[q] memory _questions, uint _startingTime, uint _endingTime) public onlyOwner {
         currentTestId = currentTestId.add(1);
         currentTest = Test(currentTestId, _startingTime, _endingTime, _questions);
+        answersUpdated = false;
+        emit TestAdded(currentTest.id, currentTest.startingTime, currentTest.endingTime, currentTest.questions);
     }
 
     function testAddTest() external {
-        currentTestId = currentTestId.add(1);
-        currentTest = Test(currentTestId, now, now.add(now), ['a','a']);
+        addTest(['a','a'], now, now.add(now));
     }
 
     // @info update the answers for the last finished test
     // so that the users' scores can be calculated
     function updateAnswers(uint8[q] memory _answers) external onlyOwner testOver {
         answers = _answers;
-    }
-
-    // @dev using this function to calculate scores of all users who gave the test
-    // @params the answers for the last for which to give scores test
-    function giveScores() external onlyOwner {
-
+        answersUpdated = true;
+        emit AnswersUpdated(currentTest.id, _answers);
     }
 
 
@@ -65,11 +73,37 @@ contract ProofOfKnowledge is Ownable{
     }
 
     // @dev used by user to update his/her score for the current test after the answers are updated
-    function updateMyScore() external testOver returns (uint) {
+    function updateMyScore() external returns (uint) {
+        require(answersUpdated, "Wait till answers updated");
         require(userLimits[_encodeAddress(_msgSender())] == 1, "Already updated score");
-        // user must be only able to call this function only once after test is over
         //TODO: Calculate score here
+        uint score = _calculateScore(_msgSender());
+        // update user score 
+        userToScore[_msgSender()] = score;
         userLimits[_encodeAddress(_msgSender())] = 2;
+    }
+
+    function _calculateScore(address _user) internal view returns (uint) {
+        uint score = userToScore[_user];
+        uint8[q] memory userAnswers = getUserAnswers(_user);
+
+        // first calculate the number of correct answers of the user in this test
+        uint m = 0;
+        for (uint i =0; i < q; i++) {
+            if (userAnswers[i] == answers[i]) {
+                m++;
+            }
+        }
+
+        if (currentTestId == 1) {
+            // for the first test the score is 100% of what a user scores
+             score = m.mul(uint(10)**decimals).div(q);
+             return score;
+        }
+
+        // alpha% of previous score plus beta% of new score
+        score = alpha.mul(score).div(1000) + beta.mul(m).div(1000).mul(uint(10)**decimals).div(q);
+        return score;
     }
 
     // @info outputs all the questions for the current test
@@ -77,7 +111,7 @@ contract ProofOfKnowledge is Ownable{
         return currentTest.questions;
     }
 
-    function getAnswersForUser(address _user) public view returns (uint8[q] memory) {
+    function getUserAnswers(address _user) public view returns (uint8[q] memory) {
         return userToAnswers[_encodeAddress(_user)];
     } 
 
@@ -85,7 +119,9 @@ contract ProofOfKnowledge is Ownable{
         return keccak256(abi.encodePacked(currentTestId, _user));
     }
 
-    function getUserLimit(address _u) public view returns (uint8) {
-        return userLimits[_encodeAddress(_u)];
+    function setAlphaBeta(uint _alpha, uint _beta) external onlyOwner {
+        require (_alpha + beta == 1000);
+        alpha = _alpha;
+        beta = _beta;
     }
 }

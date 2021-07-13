@@ -22,11 +22,11 @@ contract ProofOfKnowledge is Ownable{
         string[q] questions;
     }
 
-    uint8 public constant decimals = 6;
+    uint8 public constant decimals = 18;
     uint public currentTestId = 0;
-    uint16 public constant q = 2;  // t being the total number of questions for current Test
+    uint16 public constant q = 10;  // t being the total number of questions for current Test
     Test public currentTest;
-    uint8[q] private answers; // answers for the last finished test
+    uint8[q] public answers; // answers for the last finished test
     bool public answersUpdated = false;
 
     mapping(bytes32=>uint8[q]) public userToAnswers; // mapping of a user to their answers for the current test
@@ -37,11 +37,6 @@ contract ProofOfKnowledge is Ownable{
     uint public alpha = 700; // percentage of previous score
     uint public beta = 300; // percentage of new score
 
-    modifier testOver() {
-        require(now > currentTest.endingTime, "Wait! Test is still not over");
-        _;
-    }
-
     // @info use this function to add a new test for the upcoming week
     // @dev remove the last test & add a new test
     function addTest(string[q] memory _questions, uint _startingTime, uint _endingTime) public onlyOwner {
@@ -51,36 +46,35 @@ contract ProofOfKnowledge is Ownable{
         emit TestAdded(currentTest.id, currentTest.startingTime, currentTest.endingTime, currentTest.questions);
     }
 
-    function testAddTest() external {
-        addTest(['a','a'], now, now.add(now));
-    }
-
     // @info update the answers for the last finished test
     // so that the users' scores can be calculated
-    function updateAnswers(uint8[q] memory _answers) external onlyOwner testOver {
+    function updateAnswers(uint8[q] memory _answers) external onlyOwner {
+        require(now > currentTest.endingTime, "Test not over");
         answers = _answers;
         answersUpdated = true;
-        emit AnswersUpdated(currentTest.id, _answers);
+        emit AnswersUpdated(currentTest.id, answers);
     }
 
 
     // @dev used by the user to give the answers for current test
     function answerTest(uint8[q] memory _answers) external {
         // user must be able to call this function only once for each test
-        require(userLimits[_encodeAddress(_msgSender())] == 0, "Already attempted test");
-        userToAnswers[_encodeAddress(_msgSender())] = _answers;
-        userLimits[_encodeAddress(_msgSender())] = 1;
+        require(userLimits[encodeAddress(_msgSender())] == 0, "Already attempted test");
+        require(now > currentTest.startingTime && now < currentTest.endingTime, "Not Test Time");
+        userToAnswers[encodeAddress(_msgSender())] = _answers;
+        userLimits[encodeAddress(_msgSender())] = 1;
     }
 
     // @dev used by user to update his/her score for the current test after the answers are updated
     function updateMyScore() external returns (uint) {
         require(answersUpdated, "Wait till answers updated");
-        require(userLimits[_encodeAddress(_msgSender())] == 1, "Already updated score");
-        //TODO: Calculate score here
+        require(userLimits[encodeAddress(_msgSender())] == 1, "Already updated score");
+        // get score 
         uint score = _calculateScore(_msgSender());
         // update user score 
         userToScore[_msgSender()] = score;
-        userLimits[_encodeAddress(_msgSender())] = 2;
+        userLimits[encodeAddress(_msgSender())] = 2;
+        return score;
     }
 
     function _calculateScore(address _user) internal view returns (uint) {
@@ -102,20 +96,20 @@ contract ProofOfKnowledge is Ownable{
         }
 
         // alpha% of previous score plus beta% of new score
-        score = alpha.mul(score).div(1000) + beta.mul(m).div(1000).mul(uint(10)**decimals).div(q);
+        score = score.mul(alpha).div(1000) + m.mul(beta).div(1000).mul(uint(10)**decimals).div(q);
         return score;
     }
 
     // @info outputs all the questions for the current test
-    function getQuestions() external view returns (string[q] memory){
-        return currentTest.questions;
+    function getCurrentTest() external view returns (uint testId, string[q] memory questions, uint startingTime, uint endindTime){
+        return (currentTest.id, currentTest.questions, currentTest.startingTime, currentTest.endingTime);
     }
 
     function getUserAnswers(address _user) public view returns (uint8[q] memory) {
-        return userToAnswers[_encodeAddress(_user)];
+        return userToAnswers[encodeAddress(_user)];
     } 
 
-    function _encodeAddress(address _user) internal view returns (bytes32) {
+    function encodeAddress(address _user) public view returns (bytes32) {
         return keccak256(abi.encodePacked(currentTestId, _user));
     }
 

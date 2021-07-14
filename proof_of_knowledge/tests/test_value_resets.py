@@ -31,7 +31,7 @@ def test_value_resets(deployer, contract):
     new_starting_time = chain.time()
     new_ending_time = new_starting_time + 3600
     contract.addTest(new_questions, new_starting_time,
-                     new_ending_time, {"from": deployer})
+                     new_ending_time, {"from": contract.owner()})
 
     # assert that the values are updated properly after adding new test
     assert (contract.currentTestId() - testId == 1)

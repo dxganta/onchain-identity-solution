@@ -17,3 +17,8 @@ def contract(deployed):
 @pytest.fixture
 def deployer(deployed):
     return deployed.deployer.address
+
+
+@pytest.fixture
+def members(deployed):
+    return deployed.boardMembers

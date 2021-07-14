@@ -51,7 +51,7 @@ def test_score_calculation(contract, deployer):
     new_starting_time = chain.time()
     new_ending_time = new_starting_time + 3600
     contract.addTest(new_questions, new_starting_time,
-                     new_ending_time, {"from": deployer})
+                     new_ending_time, {"from": contract.owner()})
 
     chain.sleep(10)
     chain.mine()
@@ -67,7 +67,7 @@ def test_score_calculation(contract, deployer):
     chain.sleep(3600)
     chain.mine()
 
-    contract.updateAnswers(correct_answers, {"from": deployer})
+    contract.updateAnswers(correct_answers, {"from": contract.owner()})
 
     contract.updateMyScore({"from": user1})
     contract.updateMyScore({"from": user2})

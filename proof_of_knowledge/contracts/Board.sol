@@ -49,7 +49,7 @@ contract Board {
     }
 
     function _setNewOwner() internal {
-        uint rand =  uint(keccak256(abi.encodePacked(block.difficulty, now, _owner)));
+        uint rand =  uint(keccak256(abi.encodePacked(now, _owner)));
         uint ind = UniformRandomNumber.uniform(rand, _members.length);
         _owner = _members[ind];
         emit NewOwner(_owner, now);

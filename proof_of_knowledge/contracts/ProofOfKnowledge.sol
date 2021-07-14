@@ -3,10 +3,10 @@ pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../deps/SafeMathUpgradeable.sol";
-import "../deps/Ownable.sol";
+import "./Board.sol";
 
 /// @dev This will be a multiple choice question test
-contract ProofOfKnowledge is Ownable{
+contract ProofOfKnowledge is Board{
     using SafeMathUpgradeable for uint;
     using SafeMathUpgradeable for uint8;
 
@@ -35,6 +35,13 @@ contract ProofOfKnowledge is Ownable{
     uint public alpha = 700; // percentage of previous score
     uint public beta = 300; // percentage of new score
 
+
+    constructor(address[] memory _boardMembers) public
+    Board(_boardMembers)
+     {
+
+    }
+
     // @info use this function to add a new test for the upcoming week
     // @dev remove the last test & add a new test
     function addTest(string[q] memory _questions, uint _startingTime, uint _endingTime) public onlyOwner {
@@ -50,6 +57,7 @@ contract ProofOfKnowledge is Ownable{
         require(now > currentTest.endingTime, "Test not over");
         answers = _answers;
         answersUpdated = true;
+        _setNewOwner();
         emit AnswersUpdated(currentTest.id, answers);
     }
 
@@ -57,21 +65,21 @@ contract ProofOfKnowledge is Ownable{
     // @dev used by the user to give the answers for current test
     function answerTest(uint8[q] memory _answers) external {
         // user must be able to call this function only once for each test
-        require(userLimits[encodeAddress(_msgSender())] == 0, "Already attempted test");
+        require(userLimits[encodeAddress(msg.sender)] == 0, "Already attempted test");
         require(now > currentTest.startingTime && now < currentTest.endingTime, "Not Test Time");
-        userToAnswers[encodeAddress(_msgSender())] = _answers;
-        userLimits[encodeAddress(_msgSender())] = 1;
+        userToAnswers[encodeAddress(msg.sender)] = _answers;
+        userLimits[encodeAddress(msg.sender)] = 1;
     }
 
     // @dev used by user to update his/her score for the current test after the answers are updated
     function updateMyScore() external returns (uint) {
         require(answersUpdated, "Wait till answers updated");
-        require(userLimits[encodeAddress(_msgSender())] == 1, "Already updated score");
+        require(userLimits[encodeAddress(msg.sender)] == 1, "Already updated score");
         // get score 
-        uint score = _calculateScore(_msgSender());
+        uint score = _calculateScore(msg.sender);
         // update user score 
-        userToScore[_msgSender()] = score;
-        userLimits[encodeAddress(_msgSender())] = 2;
+        userToScore[msg.sender] = score;
+        userLimits[encodeAddress(msg.sender)] = 2;
         return score;
     }
 

@@ -9,7 +9,9 @@ def main():
 def deploy():
     deployer = accounts[0]
 
-    contract = ProofOfKnowledge.deploy({'from': deployer})
+    boardMembers = [deployer]
+
+    contract = ProofOfKnowledge.deploy(boardMembers, {'from': deployer})
 
     return DotMap(
         deployer=deployer,

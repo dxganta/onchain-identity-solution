@@ -33,6 +33,3 @@ yarn-error.log*
 
 # vercel
 .vercel
-
-#config sensitive variables
-next.config.js

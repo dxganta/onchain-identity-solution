@@ -90,6 +90,10 @@ function Home({ proposalCreateObjects, proposalVoteObjects }) {
         </form>
         <div className='mt-2 text-yellow-400 text-sm'>{showAddress}</div>
         <div className='mt-8 text-2xl text-white font-semibold'>
+          Delegator Score:{' '}
+          <span className='text-xl text-gray-300 font-normal'>TBD</span>
+        </div>
+        <div className='mt-8 text-2xl text-white font-semibold'>
           Proposals Created
         </div>
         <div className='grid grid-cols-1'>{filterProposalCreateCards()}</div>

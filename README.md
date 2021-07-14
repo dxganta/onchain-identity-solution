@@ -12,8 +12,7 @@ To tackle this problem, I first asked myself a simple question:
 The first 2 problems are easy. We can easily build a dapp which queries the blockchain for the "ProposalCreated" & "VoteCast" events emitted by the Sovryn's Governor contract and show them in a beautiful frontend. The user must be able to search by delegator address.
 
 ### For #3
-But the 3rd problem is a little tricky. How do you figure out how knowledgable someone is about the Sovryn Protocol? <br>Well, back in school, how did our teachers figure out who is good in mathematics and who is bad?<br> Tests right!!!<br> And thats the path I took.
-<br>Tests, But on the BLOCKCHAIN!<br> 
+But the 3rd problem is a little tricky. How do you figure out how knowledgable someone is about the Sovryn Protocol? <br>Well, back in school, how did our teachers figure out who is good in mathematics and who is bad?<br> Tests right!!!<br> And thats the path I took. Tests, But on the BLOCKCHAIN!<br> 
 I created a protocol which I am calling (Ahhaahh) <strong>Proof Of Knowledge</strong>. More details below.
 
 

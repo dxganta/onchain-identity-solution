@@ -5,6 +5,7 @@ const cleanProposalCreateObjects = (items) => {
 
   for (var i = 0; i < items.length; i++) {
     objects.push({
+      id: items[i].decoded.params[0].value,
       title: items[i].decoded.params[8].value,
       createdAt: items[i].decoded.params[6].value,
       endsAt: items[i].decoded.params[7].value,

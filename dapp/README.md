@@ -1,34 +1,12 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+##  DAPP
 
-## Getting Started
+<img src="https://user-images.githubusercontent.com/47485188/125639754-ecb44053-750c-408f-b39b-776e7e1253d9.png"></img>
 
-First, run the development server:
+You can test it here:
+https://sovryn-delegator.vercel.app/
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+Just enter the address of any Sovryn staker in the search bar and click on the search button, and the dapp will output a list of the Proposals Created & the Proposals Voted by that address.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Note: The dapp is querying the events from this Sovryn governor address : 0xfF25f66b7D7F385503D70574AE0170b6B1622dAd
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+The Delegator Score is just static for now. 

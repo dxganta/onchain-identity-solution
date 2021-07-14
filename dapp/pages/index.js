@@ -25,6 +25,7 @@ function Home({ proposalCreateObjects, proposalVoteObjects }) {
       totalCards.push(
         <ProposalCreatedCard
           key={i}
+          id={p.id}
           title={p.title}
           createdAt={p.createdAt}
           endsAt={p.endsAt}
@@ -101,6 +102,7 @@ function Home({ proposalCreateObjects, proposalVoteObjects }) {
           Proposals Voted For
         </div>
         <div className='grid grid-cols-1'>{filterProposalVotedCards()}</div>
+        <div className='pb-20'></div>
       </div>
     </div>
   );
@@ -113,6 +115,8 @@ export async function getStaticProps(context) {
   const proposalVoteObjects = await getProposalVoteObjects(
     config.demoDelegator
   );
+
+  console.log(proposalCreateObjects[0]);
   return {
     props: {
       proposalCreateObjects,

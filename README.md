@@ -1,17 +1,23 @@
 # Onchain Identity
 
-## Concepts
-1. Ideana On Chain Indentity
-2. Zero Knowledge Proofs
-3. 
+## Problem
+To tackle this problem, I first asked myself a simple question:
+### If I was a staker in the Sovryn Protocol, then what would convince me to make someone a delegator?
+1. First I would want to know what are the SIPs that he voted for in the past. I would want to know what were his votes were for each SIP. This would give me an idea if his vision agrees with mine.
+2. Next I would want to know if she has created any SIPs herself in the past. This would give me further information about her knowledge and vision of the Sovryn Protocol. 
+3. Third, and most important I want to know how much this person knows about the Sovryn Protocol. I want to be sure specifically that this person knows more than me about the Sovryn Protocol. He might be a PHD in Quantum Mechanics, but if he doesn't know anything about Sovryn and its vision then I am not going to make him a delegate my precious voting power to him.
+
+## Solutions
+### For #1 & #2
+The first 2 problems are easy. We can easily build a dapp which queries the blockchain for the "ProposalCreated" & "VoteCast" events emitted by the Sovryn's Governor contract and show them in a beautiful frontend. The user must be able to search by delegator address.
+
+### For #3
+But the 3rd problem is a little tricky. How do you figure out how knowledgable someone is about the Sovryn Protocol? <br>Well, back in school, how did our teachers figure out who is good in mathematics and who is bad?<br> Tests right!!!<br> And thats the path I took.
+<br>Tests, But on the BLOCKCHAIN!<br> 
+I created a protocol which I am calling (Ahhaahh) <strong>Proof Of Knowledge</strong>. More details below.
 
 
-## If I was a staker in the Sovryn Protocol, then why would I make someone a delegator?
-1. If he has a record of always voting on the side that wins (i.e always making the correct choice)
-    I want to know what are the SIPs he voted on previously. How many of them he got right. How many were wrong.
-2. If he has created SIPs in the past that has got majority of yes votes
-3. Periodic proof of knowledge test for the delegators
-4. If he has passed a lot of proof of knowledge tests (Has a high POF Score)
+## 1. DAPP
 
 
 
@@ -37,9 +43,3 @@
 ## Setup
 //TODO: Launch the frontend dapp on heroku
 Replace the cvKey in next.config.js with your covalent api key
-
-
-## Tests
-1. Is the userToAnswers mapping in the Test Struct reset, everytime a new test is added
-
-4. Score calculation is correct. Do a off-chain expected score calculation & compare it with the score from the contract. During this test, also test answers updated by multiple users and not just one user.

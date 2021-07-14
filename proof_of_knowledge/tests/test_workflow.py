@@ -12,7 +12,11 @@ def test_workflow(deployer, contract):
     ending_time = chain.time() + 3600  # ends after one hour
 
     # add POF test
-    contract.addTest(questions, starting_time, ending_time, {"from": deployer})
+    tx = contract.addTest(questions, starting_time,
+                          ending_time, {"from": deployer})
+
+    # assert emission of TestAdded event
+    assert(tx.events["TestAdded"])
 
     # make sure that new test is updated correctly
     (testId, _questions, _starting_time, _ending_time) = contract.getCurrentTest()
@@ -50,6 +54,6 @@ def test_workflow(deployer, contract):
     # test user score gets updated properly
     tx2 = contract.updateMyScore({"from": user})
 
-    # since the user answered 50% questions correctly & this is the first test, his score must be 0.5 multiplied by 10**decimals
+    # since the user answered 50% questions correctly & this is the first test, her score must be 0.5 multiplied by 10**decimals
     decimals = contract.decimals()
     assert(tx2.return_value == 0.5*10**decimals)

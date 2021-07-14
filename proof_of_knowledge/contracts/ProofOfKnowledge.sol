@@ -2,7 +2,6 @@
 pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../deps/AddressUpgradeable.sol";
 import "../deps/SafeMathUpgradeable.sol";
 import "../deps/Ownable.sol";
 
@@ -10,7 +9,6 @@ import "../deps/Ownable.sol";
 contract ProofOfKnowledge is Ownable{
     using SafeMathUpgradeable for uint;
     using SafeMathUpgradeable for uint8;
-    using AddressUpgradeable for address;
 
     event TestAdded(uint id, uint startingTime, uint endingTime, string[q] questions);
     event AnswersUpdated(uint testId, uint8[q] answers);
@@ -96,11 +94,11 @@ contract ProofOfKnowledge is Ownable{
         }
 
         // alpha% of previous score plus beta% of new score
-        score = score.mul(alpha).div(1000) + m.mul(beta).div(1000).mul(uint(10)**decimals).div(q);
+        score = score.mul(alpha).div(1000) + m.mul(beta).mul(uint(10)**decimals).div(1000).div(q);
         return score;
     }
 
-    // @info outputs all the questions for the current test
+    // @info outputs all the values for the current test
     function getCurrentTest() external view returns (uint testId, string[q] memory questions, uint startingTime, uint endindTime){
         return (currentTest.id, currentTest.questions, currentTest.startingTime, currentTest.endingTime);
     }
@@ -113,6 +111,7 @@ contract ProofOfKnowledge is Ownable{
         return keccak256(abi.encodePacked(currentTestId, _user));
     }
 
+    /// @dev set the alpha% & beta%, used in calculation of user score
     function setAlphaBeta(uint _alpha, uint _beta) external onlyOwner {
         require (_alpha + beta == 1000);
         alpha = _alpha;

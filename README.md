@@ -41,3 +41,5 @@ Replace the cvKey in next.config.js with your covalent api key
 
 ## Tests
 1. Is the userToAnswers mapping in the Test Struct reset, everytime a new test is added
+
+4. Score calculation is correct. Do a off-chain expected score calculation & compare it with the score from the contract. During this test, also test answers updated by multiple users and not just one user.

@@ -1,4 +1,4 @@
-## Installation and Setup
+# Installation and Setup
 
 1. Install Brownie & Ganache-CLI, if you haven't already.
 
@@ -41,7 +41,7 @@ brownie test
   ## Now you can interact with the contracts via the console
   >>> deployed
   {
-      'boardMembers': [0x66aB6D9362d4F35596279692F0251Db635165871,          0x33A4622B82D4c04a53e170c638B944ce27cffce3, 0x0063046686E46Dc6F15918b61AE2B121458534a5, 0x21b42413bA931038f35e7A5224FaDb065d297Ba3],
+      'boardMembers': [0x66aB6D9362d4F35596279692F0251Db635165871, 0x33A4622B82D4c04a53e170c638B944ce27cffce3, 0x0063046686E46Dc6F15918b61AE2B121458534a5, 0x21b42413bA931038f35e7A5224FaDb065d297Ba3],
     'contract': 0x3194cBDC3dbcd3E11a07892e7bA5c3394048Cc87,
     'deployer': 0x66aB6D9362d4F35596279692F0251Db635165871
   }

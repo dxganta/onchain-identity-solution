@@ -8,65 +8,65 @@ def test_user_restrictions(deployer, contract):
     q = contract.q()
     questions = ['Ethereum or Bitcoin?' for x in range(q)]
     correct_answers = [1 for x in range(10)]
-    starting_time = chain.time() + 10
+    starting_time = chain.time() + 6*60
     ending_time = starting_time + 3600  # ends after one hour
 
     user_answers = [1, 1, 1, 1, 1, 3, 3, 3, 3, 3]
 
-    #  only admin is allowed to add new POF tests
+    #  only admin is allowed to add new POK tests
     with brownie.reverts("Ownable: caller is not the owner"):
-        contract.addTest(questions, starting_time, ending_time, {"from": user})
+        contract.addTest(starting_time, ending_time, {"from": user})
 
-    # add POF test
-    contract.addTest(questions, starting_time, ending_time, {"from": deployer})
+    # add POK test
+    contract.addTest(starting_time, ending_time, {"from": deployer})
 
-    #  user should not be able to answer POF Test before test starts
-    with brownie.reverts("Not Test Time"):
-        contract.answerTest(user_answers, {"from": user})
+    # owner must not be able to add questions 5 mins before test starting time
+    with brownie.reverts("Too Early"):
+        contract.addQuestions(questions, {"from": deployer})
 
-    #  admin should not be able to update answers before POF test starts
-    with brownie.reverts("Test not over"):
-        contract.updateAnswers(correct_answers, {"from": deployer})
-
-    chain.sleep(20)
+    chain.sleep(120)
     chain.mine()
 
-    contract.answerTest(user_answers, {"from": user})
+    contract.addQuestions(questions, {"from": deployer})
 
-    #  user should not be able to answer the same POF test twice
+    # user should not be able to check POK questions before test starts
+    with brownie.reverts():
+        contract.getCurrentTestQuestions({"from": user})
+
+    # user should not be able to answer questions without being added as delegator
+    with brownie.reverts("Not a delegator"):
+        contract.submitAnswers(user_answers, {"from": user})
+
+    # add user as delegator
+    contract.addDelegator({"from": user})
+
+    # user should not be able to add himself/herself as delegator twice
+    with brownie.reverts("Already a delegator"):
+        contract.addDelegator({"from": user})
+
+    #  user should not be able to answer POK Test before test starts
+    with brownie.reverts("Not Test Time"):
+        contract.submitAnswers(user_answers, {"from": user})
+
+    chain.sleep(6*60)
+    chain.mine()
+
+    # should be able to get questions now
+    contract.getCurrentTestQuestions({"from": user})
+
+    contract.submitAnswers(user_answers, {"from": user})
+
+    #  user should not be able to answer the same POK test twice
     with brownie.reverts("Already attempted test"):
-        contract.answerTest(user_answers, {"from": user})
+        contract.submitAnswers(user_answers, {"from": user})
 
-    #  admin should not be able to update Answers before POF test is finished
+    #  admin should not be able to update Answers before POK test is finished
     with brownie.reverts("Test not over"):
-        contract.updateAnswers(correct_answers, {"from": deployer})
+        contract.finishTest(correct_answers, {"from": deployer})
 
-    # user should not be able to update score before POF test is finished
-    with brownie.reverts("Wait till answers updated"):
-        contract.updateMyScore({"from": user})
-
-    # POF test finished
+    # POK test finished
     chain.sleep(4000)
     chain.mine()
 
-    # user should not be able to update score before admin updates the answers
-    with brownie.reverts("Wait till answers updated"):
-        contract.updateMyScore({"from": user})
-
     # admin updates the answers
-    contract.updateAnswers(correct_answers, {"from": deployer})
-
-    # user gets his score
-    tx = contract.updateMyScore({"from": user})
-
-    score = tx.return_value
-    print("User Score")
-    print(score)
-
-    # user should not be able to update score more than once for each POF test
-    with brownie.reverts("Already updated score"):
-        contract.updateMyScore({"from": user})
-
-    # user should not be able again put answers for the same test after updating the score
-    with brownie.reverts("Already attempted test"):
-        contract.answerTest(user_answers, {"from": user})
+    contract.finishTest(correct_answers, {"from": deployer})

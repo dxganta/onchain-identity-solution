@@ -10,31 +10,35 @@ contract ProofOfKnowledge is Board{
     using SafeMathUpgradeable for uint;
     using SafeMathUpgradeable for uint8;
 
-    event TestAdded(uint id, uint startingTime, uint endingTime, string[q] questions);
+    event DelegatorAdded(address delegator, uint time);
+    event TestAdded(uint id, uint startingTime, uint endingTime);
+    event TestQuestionsAdded(uint id, string[q] questions);
     event AnswersUpdated(uint testId, uint8[q] answers);
 
     struct Test {
         uint id;
         uint startingTime;
         uint endingTime;
-        string[q] questions;
     }
 
     uint8 public constant decimals = 18;
+    uint8 public constant x = 5; // number of minutes before the test starting time, before which owner cannot update the questions
+    uint16 public constant q = 10;  // q being the total number of questions for each Test
+
     uint public currentTestId = 0;
-    uint16 public constant q = 10;  // t being the total number of questions for current Test
-    Test public currentTest;
-    uint8[q] public answers; // answers for the last finished test
-    bool public answersUpdated = false;
 
-    mapping(bytes32=>uint8[q]) public userToAnswers; // mapping of a user to their answers for the current test
-    mapping(bytes32=>uint8) public userLimits; // mapping for limiting users to answer tests & update score only once per test
-    mapping(address=>uint) public userToScore; // current score of user (score is in 10**6 decimals)
+    Test private _currentTest;
+    string[q] private _questions; // questions for the upcoming test
 
-    // will be divided by 1000 (so 700 means 70%)
-    uint public alpha = 700; // percentage of previous score
-    uint public beta = 300; // percentage of new score
+    address[] private _delegators;
+    mapping(address=>bool) public isDelegator;
+    mapping(bytes32=>uint8[q]) public userToAnswers; // mapping of a delegator to their answers for the current test
+    mapping(bytes32=>bool) public testAttempted; // mapping for limiting users to answer tests only once per test
+    mapping(address=>uint) public userToScore; // current score of delegator (score is in 10**18 decimals)
 
+    // will be divided by 1000 (so 600 means 60%)
+    uint public alpha = 600; // percentage of previous score
+    uint public beta = 400; // percentage of new score
 
     constructor(address[] memory _boardMembers) public
     Board(_boardMembers)
@@ -42,61 +46,83 @@ contract ProofOfKnowledge is Board{
 
     }
 
-    // @info use this function to add a new test for the upcoming week
+    // @dev adds the msg.sender to the delegator
+    // this is a very important function to call for the delegators
+    // because without this the delegator wont be able to attempt tests
+    function addDelegator() public {
+        require(!isDelegator[msg.sender], "Already a delegator");
+        _delegators.push(msg.sender);
+        isDelegator[msg.sender] = true;
+        emit DelegatorAdded(msg.sender, now);
+    }
+
+    // @info use this function to add the new upcoming test
     // @dev remove the last test & add a new test
-    function addTest(string[q] memory _questions, uint _startingTime, uint _endingTime) public onlyOwner {
+    function addTest(uint _startingTime, uint _endingTime) public onlyOwner {
         currentTestId = currentTestId.add(1);
-        currentTest = Test(currentTestId, _startingTime, _endingTime, _questions);
-        answersUpdated = false;
-        emit TestAdded(currentTest.id, currentTest.startingTime, currentTest.endingTime, currentTest.questions);
+        _currentTest = Test(currentTestId, _startingTime, _endingTime);
+        emit TestAdded(_currentTest.id, _currentTest.startingTime, _currentTest.endingTime);
     }
 
-    // @info update the answers for the last finished test
-    // so that the users' scores can be calculated
-    function updateAnswers(uint8[q] memory _answers) external onlyOwner {
-        require(now > currentTest.endingTime, "Test not over");
-        answers = _answers;
-        answersUpdated = true;
-        _setNewOwner();
-        emit AnswersUpdated(currentTest.id, answers);
+    // @info add questions for the upcoming test
+    // @dev you cannot update the questions more than 5 mins before the test starts
+    function addQuestions(string[q] memory _newQuestions) public onlyOwner {
+        require(now + uint(x) *  1 minutes >= _currentTest.startingTime, "Too Early");
+        _questions = _newQuestions;
+        emit TestQuestionsAdded(_currentTest.id, _questions);
+    }
+
+    // @dev update the answers for the last finished test
+    // @dev also use the answers to update the scores of all the users
+    function finishTest(uint8[q] memory _answers) public onlyOwner {
+        require(now > _currentTest.endingTime, "Test not over");
+        _updatedAllScores(_answers);
+        emit AnswersUpdated(_currentTest.id, _answers);
     }
 
 
-    // @dev used by the user to give the answers for current test
-    function answerTest(uint8[q] memory _answers) external {
-        // user must be able to call this function only once for each test
-        require(userLimits[encodeAddress(msg.sender)] == 0, "Already attempted test");
-        require(now > currentTest.startingTime && now < currentTest.endingTime, "Not Test Time");
+    // @dev used by the delegator to submit the answers for current test
+    function submitAnswers(uint8[q] memory _answers) external {
+        // delegator must be able to call this function only once for each test
+        require(isDelegator[msg.sender], "Not a delegator");
+        require(!testAttempted[encodeAddress(msg.sender)], "Already attempted test");
+        require(now > _currentTest.startingTime && now < _currentTest.endingTime, "Not Test Time");
         userToAnswers[encodeAddress(msg.sender)] = _answers;
-        userLimits[encodeAddress(msg.sender)] = 1;
+        testAttempted[encodeAddress(msg.sender)] = true;
     }
 
-    // @dev used by user to update his/her score for the current test after the answers are updated
-    function updateMyScore() external returns (uint) {
-        require(answersUpdated, "Wait till answers updated");
-        require(userLimits[encodeAddress(msg.sender)] == 1, "Already updated score");
+    // @dev similarly to a teacher checking the answers of all students
+    // update the score for all the delegators
+    // also sets a new random owner from the members list 
+    function _updatedAllScores(uint8[q] memory _answers) internal {
+        for (uint i =0; i < _delegators.length; i++) {
+            _updateDelegatorScore(_delegators[i], _answers);
+        }
+        _setNewOwner();
+    }
+
+    // @dev update a particular delgator's score for the current test after the answers are updated
+    function _updateDelegatorScore(address _delegator, uint8[q] memory _answers) internal {
         // get score 
-        uint score = _calculateScore(msg.sender);
-        // update user score 
-        userToScore[msg.sender] = score;
-        userLimits[encodeAddress(msg.sender)] = 2;
-        return score;
+        uint score = _calculateScore(_delegator, _answers);
+        // update delegator score 
+        userToScore[_delegator] = score;
     }
 
-    function _calculateScore(address _user) internal view returns (uint) {
+    function _calculateScore(address _user, uint8[q] memory _answers) internal view returns (uint) {
         uint score = userToScore[_user];
         uint8[q] memory userAnswers = getUserAnswers(_user);
 
-        // first calculate the number of correct answers of the user in this test
+        // first calculate the number of correct answers of the delegator in this test
         uint m = 0;
         for (uint i =0; i < q; i++) {
-            if (userAnswers[i] == answers[i]) {
-                m++;
+            if (userAnswers[i] == _answers[i]) {
+                m = m.add(1);
             }
         }
 
         if (currentTestId == 1) {
-            // for the first test the score is 100% of what a user scores
+            // for the first test the score is 100% of what a delegator scores
              score = m.mul(uint(10)**decimals).div(q);
              return score;
         }
@@ -107,19 +133,28 @@ contract ProofOfKnowledge is Board{
     }
 
     // @info outputs all the values for the current test
-    function getCurrentTest() external view returns (uint testId, string[q] memory questions, uint startingTime, uint endindTime){
-        return (currentTest.id, currentTest.questions, currentTest.startingTime, currentTest.endingTime);
+    function getCurrentTestData() external view returns (uint testId, uint startingTime, uint endindTime){
+        return (_currentTest.id,_currentTest.startingTime, _currentTest.endingTime);
     }
 
+    // @info outputs currentTest questions
+    function getCurrentTestQuestions() external view returns (string[q] memory questions) {
+        require (now >= _currentTest.startingTime);
+        return _questions;
+    }
+
+    // @info outputs the answers of a particular delegator given the address
     function getUserAnswers(address _user) public view returns (uint8[q] memory) {
         return userToAnswers[encodeAddress(_user)];
     } 
 
+
+    // encodes the address with the current Test Id
     function encodeAddress(address _user) public view returns (bytes32) {
         return keccak256(abi.encodePacked(currentTestId, _user));
     }
 
-    /// @dev set the alpha% & beta%, used in calculation of user score
+    /// @dev set the alpha% & beta%, used in calculation of delegator score
     function setAlphaBeta(uint _alpha, uint _beta) external onlyOwner {
         require (_alpha + beta == 1000);
         alpha = _alpha;

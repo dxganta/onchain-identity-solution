@@ -6,7 +6,7 @@ import "../deps/UniformRandomNumber.sol";
 /*
 A slight modification of the Ownable contract.
 Instead of one owner, there will be multiple board members and
-A member of the board will be chosen as owner randomly after every POF test is finished
+A member of the board will be chosen as owner randomly after every POK test is finished
 And it will be the job of that member to design the upcoming test
 */
 

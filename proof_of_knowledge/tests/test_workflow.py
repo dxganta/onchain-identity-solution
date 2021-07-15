@@ -6,35 +6,45 @@ def test_workflow(deployer, contract):
     user = accounts[4]  # random account
 
     q = contract.q()
-    questions = ['Ethereum or Bitcoin?' for x in range(q)]
-    correct_answers = [1 for x in range(10)]
-    starting_time = chain.time()
+    questions = [
+        'Ethereum or Bitcoin? 0)Ethereum 1)Bitcoin 2)None' for x in range(q)]
+    correct_answers = [1 for x in range(q)]
+    starting_time = chain.time() + 10
     ending_time = chain.time() + 3600  # ends after one hour
 
-    # add POF test
-    tx = contract.addTest(questions, starting_time,
+    # add POK test
+    tx = contract.addTest(starting_time,
                           ending_time, {"from": deployer})
 
     # assert emission of TestAdded event
     assert(tx.events["TestAdded"])
 
     # make sure that new test is updated correctly
-    (testId, _questions, _starting_time, _ending_time) = contract.getCurrentTest()
+    (testId, _starting_time, _ending_time) = contract.getCurrentTestData()
 
     assert (testId == 1)  # since this is the first test
-    assert (questions == _questions)
     assert (starting_time == _starting_time)
     assert (ending_time == _ending_time)
 
-    # also make sure the answers are not updated before the test is over
-    assert (contract.answersUpdated() == False)
+    chain.sleep(5)
+    chain.mine()
 
+    # add questions for the test
+    contract.addQuestions(questions)
+
+    # test starts
     chain.sleep(10)
     chain.mine()
 
+    _questions = contract.getCurrentTestQuestions()
+    assert(_questions == questions)
+
+    # add user as delegator
+    contract.addDelegator({"from": user})
+
     # user updates answers
     user_answers = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
-    contract.answerTest(user_answers, {"from": user})
+    contract.submitAnswers(user_answers, {"from": user})
 
     # make sure answer gets updated properly
     a = contract.getUserAnswers(user)
@@ -44,16 +54,12 @@ def test_workflow(deployer, contract):
     chain.mine()
 
     # test time over
-    # update the answers
-    tx1 = contract.updateAnswers(correct_answers, {"from": deployer})
+    # finish test and update user scores
+    tx1 = contract.finishTest(correct_answers, {"from": deployer})
 
     # assert that the answers were updated properly
-    assert (contract.answersUpdated() == True)
     assert (tx1.events["AnswersUpdated"]['answers'] == correct_answers)
-
-    # test user score gets updated properly
-    tx2 = contract.updateMyScore({"from": user})
 
     # since the user answered 50% questions correctly & this is the first test, her score must be 0.5 multiplied by 10**decimals
     decimals = contract.decimals()
-    assert(tx2.return_value == 0.5*10**decimals)
+    assert(contract.userToScore(user) == 0.5*10**decimals)

@@ -12,17 +12,17 @@ def test_value_resets(deployer, contract):
 
     user_answers = [1, 1, 1, 1, 1, 3, 3, 3, 3, 3]
 
-    # do the whole POF test workflow once
-    contract.addTest(questions, starting_time, ending_time, {"from": deployer})
+    # do the whole POK test workflow once
+    contract.addTest(starting_time, ending_time, {"from": deployer})
+    contract.addQuestions(questions, {"from": deployer})
     chain.sleep(10)
     chain.mine()
-    contract.answerTest(user_answers, {"from": user})
+    contract.addDelegator({"from": user})
+    contract.submitAnswers(user_answers, {"from": user})
+    assert (contract.testAttempted(contract.encodeAddress(user)) == True)
     chain.sleep(3600)
     chain.mine()
-    contract.updateAnswers(correct_answers, {"from": deployer})
-    contract.updateMyScore({"from": user})
-
-    assert (contract.answersUpdated() == True)
+    contract.finishTest(correct_answers, {"from": deployer})
 
     testId = contract.currentTestId()
 
@@ -30,22 +30,20 @@ def test_value_resets(deployer, contract):
     new_questions = ['Messi or Ronaldo?' for x in range(q)]
     new_starting_time = chain.time()
     new_ending_time = new_starting_time + 3600
-    contract.addTest(new_questions, new_starting_time,
+    contract.addTest(new_starting_time,
                      new_ending_time, {"from": contract.owner()})
+    contract.addQuestions(questions, {"from": contract.owner()})
 
     # assert that the values are updated properly after adding new test
     assert (contract.currentTestId() - testId == 1)
-    (new_testId, _questions, _starting_time,
-     _ending_time) = contract.getCurrentTest()
+    (new_testId, _starting_time,
+     _ending_time) = contract.getCurrentTestData()
 
     assert (new_testId == 2)  # since this is the 2nd test
-    assert (new_questions == _questions)
     assert (new_starting_time == _starting_time)
     assert (new_ending_time == _ending_time)
 
     # assert all the previous userAnswers were reset
     assert (contract.getUserAnswers(user) == (0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
     # assert the user limits were reset
-    assert (contract.userLimits(contract.encodeAddress(user)) == 0)
-
-    assert (contract.answersUpdated() == False)
+    assert (contract.testAttempted(contract.encodeAddress(user)) == False)

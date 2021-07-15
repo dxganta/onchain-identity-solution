@@ -8,7 +8,8 @@ def test_score_calculation(contract, deployer):
     user3 = accounts[7]
 
     q = contract.q()
-    questions = ['Ethereum or Bitcoin?' for x in range(q)]
+    questions = [
+        'Ethereum or Bitcoin? 0)Ethereum 1)Bitcoin 2)Fiat' for x in range(q)]
     correct_answers = [1 for x in range(10)]
     starting_time = chain.time()
     ending_time = starting_time + 3600  # ends after one hour
@@ -17,22 +18,24 @@ def test_score_calculation(contract, deployer):
     user2_answers = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
     user3_answers = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
-    # do the whole POF test workflow once
-    contract.addTest(questions, starting_time, ending_time, {"from": deployer})
+    # do the whole POK test workflow once
+    contract.addTest(starting_time, ending_time, {"from": deployer})
+    contract.addQuestions(questions, {"from": deployer})
     chain.sleep(10)
     chain.mine()
 
-    contract.answerTest(user1_answers, {"from": user1})
-    contract.answerTest(user2_answers, {"from": user2})
-    contract.answerTest(user3_answers, {"from": user3})
+    # add users as delegators
+    contract.addDelegator({"from": user1})
+    contract.addDelegator({"from": user2})
+    contract.addDelegator({"from": user3})
+
+    contract.submitAnswers(user1_answers, {"from": user1})
+    contract.submitAnswers(user2_answers, {"from": user2})
+    contract.submitAnswers(user3_answers, {"from": user3})
 
     chain.sleep(3600)
     chain.mine()
-    contract.updateAnswers(correct_answers, {"from": deployer})
-
-    contract.updateMyScore({"from": user1})
-    contract.updateMyScore({"from": user2})
-    contract.updateMyScore({"from": user3})
+    contract.finishTest(correct_answers, {"from": deployer})
 
     expected_score_1 = get_expected_score_1st_test(
         correct_answers, user1_answers)
@@ -41,7 +44,7 @@ def test_score_calculation(contract, deployer):
     expected_score_3 = get_expected_score_1st_test(
         correct_answers, user3_answers)
 
-    # assert POF score is correct for 1st POF test
+    # assert POK score is correct for 1st POK test
     assert(contract.userToScore(user1) == expected_score_1)
     assert(contract.userToScore(user2) == expected_score_2)
     assert(contract.userToScore(user3) == expected_score_3)
@@ -50,8 +53,9 @@ def test_score_calculation(contract, deployer):
     new_questions = ['Messi or Ronaldo?' for x in range(q)]
     new_starting_time = chain.time()
     new_ending_time = new_starting_time + 3600
-    contract.addTest(new_questions, new_starting_time,
+    contract.addTest(new_starting_time,
                      new_ending_time, {"from": contract.owner()})
+    contract.addQuestions(new_questions, {"from": contract.owner()})
 
     chain.sleep(10)
     chain.mine()
@@ -60,18 +64,14 @@ def test_score_calculation(contract, deployer):
     user2_answers = [3, 3, 1, 3, 1, 3, 3, 1, 3, 3]
     user3_answers = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
-    contract.answerTest(user1_answers, {"from": user1})
-    contract.answerTest(user2_answers, {"from": user2})
-    contract.answerTest(user3_answers, {"from": user3})
+    contract.submitAnswers(user1_answers, {"from": user1})
+    contract.submitAnswers(user2_answers, {"from": user2})
+    contract.submitAnswers(user3_answers, {"from": user3})
 
     chain.sleep(3600)
     chain.mine()
 
-    contract.updateAnswers(correct_answers, {"from": contract.owner()})
-
-    contract.updateMyScore({"from": user1})
-    contract.updateMyScore({"from": user2})
-    contract.updateMyScore({"from": user3})
+    contract.finishTest(correct_answers, {"from": contract.owner()})
 
     expected_score_1 = get_expected_score_other_tests(
         expected_score_1, correct_answers, user1_answers)
@@ -80,7 +80,7 @@ def test_score_calculation(contract, deployer):
     expected_score_3 = get_expected_score_other_tests(
         expected_score_3, correct_answers, user3_answers)
 
-    # assert POF score is correct for 2nd POF test
+    # assert POK score is correct for 2nd POK test
     assert(contract.userToScore(user1) == expected_score_1)
     assert(contract.userToScore(user2) == expected_score_2)
     assert(contract.userToScore(user3) == expected_score_3)
@@ -96,7 +96,7 @@ def get_expected_score_1st_test(correct_answers, user_answers, decimals=18):
     return (score/q) * 10**decimals
 
 
-def get_expected_score_other_tests(prev_score, correct_answers, user_answers, alpha=0.7, beta=0.3, decimals=18):
+def get_expected_score_other_tests(prev_score, correct_answers, user_answers, alpha=0.6, beta=0.4, decimals=18):
     q = len(correct_answers)
     score = 0
     for i in range(q):

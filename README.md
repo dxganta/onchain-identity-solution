@@ -123,7 +123,7 @@ Let 'm' be the number of questions that the delegator got correct on a particula
 Then the score of the delegator on Test i will be<br><br>
 <img src="https://user-images.githubusercontent.com/47485188/125774765-bde30d44-ceed-4db4-bf70-c05bc1d93f5e.png" align="centre"></img>
 
-Now for the first test, the score of each delegator will be whatever comes from the above equation.
+Now for the first test, the score of each delegator will be whatever comes from the above equation. 
 
 But what about the next test? Do we just use the above formula again to calculate the delegator's score and then take the average of the previous score and the new score. And keep on doing this for every new test. Yes that can be a probable solution. But think about what will happen on the 100th test. Suppose the delegator has scored on average 80% on all previous tests. Now even if he scores 0 on the 100th test, it wont effect his score much. This corrupts the delegator score giving by giving a high delegator score to a delegator who may not deserve it. This also works oppposite. Suppose if a delegator has scored on average 50% for the past 99 tests. Getting even a 10 score on the 100th test will increase his score by only a very small amount. This disincentivizes delegators to keep themselves updated with the new advancements of the Sovryn protocol and of blockchain tech.<br>
 
@@ -144,6 +144,14 @@ The higher the β, the higher the weight on your new scores, the higher is the c
 The higher the α, the higher is the weight on your previous scores, the higher the incentives for being giving tests for a long time. So if some delegator starts attempting tests from the 19th test, then even if she scores a full 10 on that test, her net score will only be 35%. She has to slowly work her way up to a higher score. This incentivizes delegators to keep giving tests from as early as possible.
 ```
 Note: Only for the 1st test of POK, the delegator gets 100% of what she scores. So yeah,  giving the first test is a very good idea.
+```
+
+```
+Note: The scores have been scaled up to 10**18 decimals. So on the frontend divide the score by 10**18 then multiply with 100 to get the score in percent.
+```
+
+```
+The maximum score is 100% & minimum 0%.
 ```
 
 ### [The Board Contract](https://github.com/realdiganta/onchain-identity-solution/blob/main/proof_of_knowledge/contracts/Board.sol)

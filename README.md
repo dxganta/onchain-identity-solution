@@ -29,7 +29,7 @@ Note: The dapp is querying the events from this Sovryn governor address : 0xfF25
 
 The Delegator Score is just static for now. 
 
-## 2. Proof Of Knowledge (Whitepaper)
+## 2. Proof Of Knowledge
 ### Introduction:
 The main idea is to organize a series of periodic tests with each test containing a fixed number of multiple choice questions, which will be decided in advance by a single owner. The scoring will be based on a weighted formula, such that as time passes, the old test scores are given less weight and the most recent test scores are given more weight for the total score calculation of a user.
 
@@ -113,6 +113,31 @@ access: only owner
 4. Though the test can be added, much before the actual starting time of the test, the questions for the test can only be submitted 5 mins before the test starting time.
 5. The owner cannot submit answers & update scores before the test ending time.
 ### Scoring Formula:
+No doubt the most important part of Proof of Knowledge is the scoring. There are 2 main questions here: First how do you score delegators on each test? And second, how do you add that score to the previous scores of the delegator to get a net score?
+
+Let 'q' be the total number of questions for each test<br>
+Suppose q = 10
+<br><br>
+Let 'm' be the number of questions that the delegator got correct on that particular test 'i'<br>
+Then the score of the delegator on Test i will be<br>
+<img src="https://user-images.githubusercontent.com/47485188/125774765-bde30d44-ceed-4db4-bf70-c05bc1d93f5e.png" align="centre"></img>
+
+Now for the first test, the score of each delegator will be whatever comes from the above equation.
+
+But what about the next test? Do we just use the above formula again to calculate the delegator's score and then take the average of the previous score and the new score. And keep on doing this for every new test. Yes that can be a probable solution. But think about what will happen on the 100th test. Suppose the delegator has score on average 80% on all previous tests. Now even if he scores 0 on the 100th test, it wont effect his score much. This corrupts the delegator score giving by giving a high delegator score to a delegator who may not deserve it. This also works oppposite. Suppose if a delegator has scored on average 50% for the past 99 tests. Getting even a 10 score on the 100th test will increase his score by only a very small amount. This disincentivizes delegators to keep themselves updated with the new advancements of the Sovryn protocol and of blockchain tech.<br><br>
+
+So to fix this, and to incentivize users to keep scoring high numbers on new tests, I have designed a weighted scoring formula, where a fixed percentage of the previous score will be added to a fixed percent of the new score.
+
+Suppose for the 2nd test, the user gets 'm' questions correct out of total 'q' questions.
+
+Let 'α' be the percentage of previous score of delegator to take.
+Let 'β' be the percentage of new score of delegator to take.
+
+So for test 'n' the net score of the user will be:<br><br>
+<img src="https://user-images.githubusercontent.com/47485188/125777336-efa7528e-d8d7-4c5e-a382-b72a059e6ad6.png">
+
+Currently in the contract, α has been set to 60% & β to 40%. But these values can be changed by the owner.
+
 
 ### The Board Contract:
 ### Notes: 

@@ -29,6 +29,7 @@ contract ProofOfKnowledge is Board{
 
     Test private _currentTest;
     string[q] private _questions; // questions for the upcoming test
+    bool public questionsUpdated = false;
 
     address[] private _delegators;
     mapping(address=>bool) public isDelegator;
@@ -69,6 +70,7 @@ contract ProofOfKnowledge is Board{
     function addQuestions(string[q] memory _newQuestions) public onlyOwner {
         require(now + uint(x) *  1 minutes >= _currentTest.startingTime, "Too Early");
         _questions = _newQuestions;
+        questionsUpdated = true;
         emit TestQuestionsAdded(_currentTest.id, _questions);
     }
 
@@ -77,16 +79,18 @@ contract ProofOfKnowledge is Board{
     function finishTest(uint8[q] memory _answers) public onlyOwner {
         require(now > _currentTest.endingTime, "Test not over");
         _updatedAllScores(_answers);
+        questionsUpdated = false;
         emit AnswersUpdated(_currentTest.id, _answers);
     }
 
 
     // @dev used by the delegator to submit the answers for current test
-    function submitAnswers(uint8[q] memory _answers) external {
+    function submitAnswers(uint8[q] memory _answers) public {
         // delegator must be able to call this function only once for each test
         require(isDelegator[msg.sender], "Not a delegator");
         require(!testAttempted[encodeAddress(msg.sender)], "Already attempted test");
         require(now > _currentTest.startingTime && now < _currentTest.endingTime, "Not Test Time");
+        require(questionsUpdated, "Questions not updated");
         userToAnswers[encodeAddress(msg.sender)] = _answers;
         testAttempted[encodeAddress(msg.sender)] = true;
     }
@@ -140,6 +144,7 @@ contract ProofOfKnowledge is Board{
     // @info outputs currentTest questions
     function getCurrentTestQuestions() external view returns (string[q] memory questions) {
         require (now >= _currentTest.startingTime);
+        require(questionsUpdated);
         return _questions;
     }
 

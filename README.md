@@ -5,7 +5,7 @@ To tackle this problem, I first asked myself a simple question:
 ### If I was a staker in the Sovryn Protocol, then what would convince me to make someone a delegator?
 1. First I would want to know what are the SIPs that he voted for in the past. I would want to know what were his votes were for each SIP. This would give me an idea if his vision agrees with mine.
 2. Next I would want to know if she has created any SIPs herself in the past. This would give me further information about her knowledge and vision of the Sovryn Protocol. 
-3. Third, and most important I want to know how much this person knows about the Sovryn Protocol. I want to be sure specifically that this person knows more than me about the Sovryn Protocol. He might be a PHD in Quantum Mechanics, but if he doesn't know anything about Sovryn and its vision then I am not going to make him a delegate my precious voting power to him.
+3. Third, and most important I want to know how much this person knows about the Sovryn Protocol & Blockchain technology in general. I want to be sure specifically that this person knows more than me about the Sovryn Protocol. He might be a PHD in Quantum Mechanics, but if he doesn't know anything about Sovryn and its vision then I am not going delegate my precious voting power to him.
 
 ## Solutions
 ### For #1 & #2
@@ -36,13 +36,75 @@ The main idea is to organize a series of periodic tests with each test containin
 The questions are to be multiple choice questions. Because when the user submits the answers, he/she will be submitting an array of length q (q being the total number of questions) with each value being a number between 0 to n. (n being the total choices for each question)
 
 ### Process:
-First the owner adds a test with parameters "starting time of the test" & "ending time of the test". Note that the questions for the test are not added directly while adding the test. Then just 5 mins before the starting time of the test, the owner adds the questions for the test. If the owner tries to add the questions anytime before that, then the smart contract will simply give an error and revert. This "5 mins" is constant and cannot be changed after the deployment of the contract (If you want to change it, you have to change the constant value before deploying contract). Since nothing on the blockchain is private, so the questions are to be added separately like this, just few mins before the test starting time to prevent leaking of questions before the test.
+First the owner adds a test with parameters "starting time of the test" & "ending time of the test". Note that the questions for the test are not added directly while adding the test. <br>
+
+<strong>addTest(uint startingTime, uint endingTime)</strong><br>
+```
+params: (startingTime) => starting time of the test , (endingTime) => ending time of the test (in epoch seconds)
+
+info: automatically calculates the test id and adds the test to the contract as the upcoming test. 
+
+events: emits event TestAdded(id, startingTime, endingTime)
+
+access: only owner
+```
+
+Then just 5 mins before the starting time of the test, the owner adds the questions for the test. If the owner tries to add the questions anytime before that, then the smart contract will simply give an error and revert. This "5 mins" is constant and cannot be changed after the deployment of the contract (If you want to change it, you have to change the constant value before deploying contract). Since nothing on the blockchain is private, so the questions are to be added separately like this, just few mins before the test starting time to prevent leaking of questions before the test.
+
+<strong>addQuestions(string[10] memory newQuestions)</strong>
+```
+params: (newQuestions) => array of strings with each string being the question with the answer choices. E.g ["Which sidechain is sovryn deployed to? 0)Polygon 1)RSK 2)Ethereum 3)Bitcoin", ...]
+
+info: Adds these questions for the current upcoming test
+
+events: emits event TestQuestionsAdded(testId, questions)
+
+access: only owner
+```
 
 Before submitting answers, the user has to first add himself/herself as a delegator to the contract. This function has to be called just once (just like the approve function of an erc20 contract). Once done, the user will be able to participate in tests & the contract will track of his/her score.
 
-Next the user has to wait till the test starts. The user first views the questions for the test (The user cannot view the questions before the test starting time). Then the user submits his answers all at once, by sending an array of length q (q being the total number of questions) with each value being a digit between 0 to n (n being the total choices for each question).
+<strong>addDelegator()</strong>
+```
+info: adds msg.sender as delegator
+
+events: emits event DelegatorAddress(delegator, time)
+
+access: public
+```
+
+Next the user has to wait till the test starts. The user first views the questions for the test (The user cannot view the questions before the test starting time).
+
+<strong>getCurrentTestQuestions()</strong>
+```
+info: returns the questions for the current test
+
+access: public
+```
+
+ Then the user submits his answers all at once, by sending an array of length q (q being the total number of questions) with each value being a digit between 0 to n (n being the total choices for each question).
+
+ <strong>submitAnswers(uint8[10] answers)</strong>
+ ```
+ params: (answers) => array containing answers for all the questions of the current test. E.g => [0,1,1,2,3,1,0,1,0,1]
+
+ info: submits the user's answers for the current test to the contract for later scoring
+
+ access: public
+ ```
 
 Once done, the owner has to wait till the test is over to call one single function which will finish the test. This will update the scores of all the delegators. The owner will submit a similar array (of length q) to the one that the user submitted but with the correct values as parameter. This array will be used for score calculation of the users. 
+
+<strong>finishTest(uint8[10] answers)</strong>
+```
+params: (answers) => array containing the correct answers for all the questions of the current test. E.g => [0,1,1,2,3,1,0,1,0,1]. The delegators will be scored bases on this array
+
+info: updates the scores for all the delegators. also sets a new random owner from the board members. 
+
+events: emits events AnswersUpdated(testId, answers), NewOwner(owner, time)
+
+access: only owner
+```
 
 ### Rules (coded into the smart contract):
 1. A user must first add himself/herself as a delegator in the POK contract. 

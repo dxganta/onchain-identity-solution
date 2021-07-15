@@ -53,7 +53,7 @@ Then just 5 mins before the starting time of the test, the owner adds the questi
 
 <strong>addQuestions(string[10] memory newQuestions)</strong>
 ```
-params: (newQuestions) => array of strings with each string being the question with the answer choices. E.g ["Which sidechain is sovryn deployed to? 0)Polygon 1)RSK 2)Ethereum 3)Bitcoin", ...]
+params: (newQuestions) => array of strings with each string being the question with the answer choices. E.g ["Which sidechain is sovryn deployed to? 0)Polygon 1)RSK 2)Ethereum 3)Bitcoin", "How much leverage does Sovryn offer? 0)3x 1)2x 2)10x 3)5x "...]
 
 info: Adds these questions for the current upcoming test
 
@@ -119,54 +119,39 @@ Let 'q' be the total number of questions for each test<br>
 Suppose q = 10
 <br><br>
 Let 'm' be the number of questions that the delegator got correct on that particular test 'i'<br>
-Then the score of the delegator on Test i will be<br>
+Then the score of the delegator on Test i will be<br><br>
 <img src="https://user-images.githubusercontent.com/47485188/125774765-bde30d44-ceed-4db4-bf70-c05bc1d93f5e.png" align="centre"></img>
 
 Now for the first test, the score of each delegator will be whatever comes from the above equation.
 
 But what about the next test? Do we just use the above formula again to calculate the delegator's score and then take the average of the previous score and the new score. And keep on doing this for every new test. Yes that can be a probable solution. But think about what will happen on the 100th test. Suppose the delegator has score on average 80% on all previous tests. Now even if he scores 0 on the 100th test, it wont effect his score much. This corrupts the delegator score giving by giving a high delegator score to a delegator who may not deserve it. This also works oppposite. Suppose if a delegator has scored on average 50% for the past 99 tests. Getting even a 10 score on the 100th test will increase his score by only a very small amount. This disincentivizes delegators to keep themselves updated with the new advancements of the Sovryn protocol and of blockchain tech.<br><br>
 
-So to fix this, and to incentivize users to keep scoring high numbers on new tests, I have designed a weighted scoring formula, where a fixed percentage of the previous score will be added to a fixed percent of the new score.
+So to fix this, and to incentivize users to keep scoring high numbers on new tests, a weighted scoring formula is being used, where a fixed percentage of the previous score will be added to a fixed percent of the new score.
 
-Suppose for the 2nd test, the user gets 'm' questions correct out of total 'q' questions.
+Suppose for test 'n', the user gets 'm' questions correct out of total 'q' questions.
 
-Let 'α' be the percentage of previous score of delegator to take.
-Let 'β' be the percentage of new score of delegator to take.
+Let 'α' be the percentage for previous score of delegator.
+Let 'β' be the percentage for new score of delegator.
 
 So for test 'n' the net score of the user will be:<br><br>
 <img src="https://user-images.githubusercontent.com/47485188/125777336-efa7528e-d8d7-4c5e-a382-b72a059e6ad6.png">
 
-Currently in the contract, α has been set to 60% & β to 40%. But these values can be changed by the owner.
+Currently in the contract, α has been set to 65% & β to 35%. But these values can be changed by the owner.
 
+The higher the β, the higher the weight on your new scores, the higher is the cost for missing a test. So even if you have a perfect score of 100% on all your previous 999 tests, missing the 100th test would reduce your score directly to 65%. This incentivizes delegators to keep giving tests and keep themselves updated with the newest knowledge.
+
+The higher the α, the higher is the weight on your previous scores, the higher the incentives for being giving tests for a long time. So if some delegator starts attempting tests from the 19th test, then even if he scores a full 10 on the test, his net score will only be 35%. He has to slowly work his way up to a higher score. This incentivizes delegators to keep giving tests from as early as possible.
+```
+Note: Only for the 1st test of POK, the delegator gets 100% of what she scores. So yeah,  giving the first test is a very good idea.
+```
 
 ### The Board Contract:
-### Notes: 
-Talk about how the questions should be designed
+There is another very important question. 
+<strong>Who makes the questions?</strong><br><br>
+Firstly, the question for a particular test needs to be made by only 1 person, so that there are less chances of question paper leakage. Secondly, won't that make the solution a bit centralized?<br>
+So to fix this problem, I have designed a new Board Contract which is a slight modification of the very famous Ownable Contract.<br>
+At contract deployment, we have to supply an array of EOA addresses. These addresses will be the board members for the contract.<br>
+After every test finishes, a new owner will be chosen at random from these board members and it will be the job of that owner to organize the next test.<br>
 
-### Events:
-
-
-## Setup & Installation:
-
-## Proof of Knowledge
-1. can only give the test once
-2. POK Score = Sum of the total number of questions for all tests in all periods divided by the answers that you got right till now
-    So if someone doesn't give a test during a period, then by default he gets zero in all the questions on that test
-3. But there is a loophole here. So suppose the total questions till now are 20, then on the next test, losing all 10 of them will
-    reduce your score significantly. But if there are like 1500 total tests till now, then getting 10 wrong on the next test
-    wont matter shit. So a good fix will be weighted testing, with more recent tests having a higher weight and older tests having a lower one.
-
-
-# POK Tests
-1. On every test there will be 10 questions
-2. You must have staked SOV to participate in the test (optional)
-3. You can attempt the test only once on test day
-4. Tests will be held periodically with questions to be decided by the admin team
-5. A test will have a fixed time interval (starting time & ending time) between which a user has to do it.
-6. A list of addresses need to be set as admins at contract inception, and every week a person among them will be chosen to figure out the questions for the upcoming test
-
-
-
-## Setup
-//TODO: Launch the frontend dapp on heroku
-Replace the cvKey in next.config.js with your covalent api key
+New board members can be added only by the approval of all the current board members. First each board member has to vote the new member individually using the <strong>voteNewMember(address newMember)</strong> function.<br>
+Then if all the board members have approved the new member, he/she can be added to the board members array using the <strong>addNewMember(address newMember)</strong> function.

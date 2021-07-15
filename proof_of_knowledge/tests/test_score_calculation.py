@@ -96,7 +96,7 @@ def get_expected_score_1st_test(correct_answers, user_answers, decimals=18):
     return (score/q) * 10**decimals
 
 
-def get_expected_score_other_tests(prev_score, correct_answers, user_answers, alpha=0.6, beta=0.4, decimals=18):
+def get_expected_score_other_tests(prev_score, correct_answers, user_answers, alpha=0.65, beta=0.35, decimals=18):
     q = len(correct_answers)
     score = 0
     for i in range(q):

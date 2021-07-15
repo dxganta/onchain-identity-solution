@@ -38,8 +38,8 @@ contract ProofOfKnowledge is Board{
     mapping(address=>uint) public userToScore; // current score of delegator (score is in 10**18 decimals)
 
     // will be divided by 1000 (so 600 means 60%)
-    uint public alpha = 600; // percentage of previous score
-    uint public beta = 400; // percentage of new score
+    uint public alpha = 650; // percentage of previous score
+    uint public beta = 350; // percentage of new score
 
     constructor(address[] memory _boardMembers) public
     Board(_boardMembers)

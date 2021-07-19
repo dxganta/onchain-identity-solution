@@ -25,7 +25,9 @@ https://sovryn-delegator.vercel.app/
 
 Just enter the address of any Sovryn staker in the search bar and click on the search button, and the dapp will output a list of the Proposals Created & the Proposals Voted by that address.
 
-Note: The dapp is querying the events from this Sovryn governor address : 0xfF25f66b7D7F385503D70574AE0170b6B1622dAd
+The dapp is querying the RSK Blockchain for the "ProposalCreated" & "VoteCast" events from the governor contract for getting the proposals created & proposals voted by a delegator.
+
+<strong>Note:</strong> I found [multiple governor contract addresses](https://docs.google.com/spreadsheets/d/1SSqQJ4HNrIo8jRghKBa4ao_aAt4TJxP7jafRV-l0YcM/edit#gid=294704344) form sovryn wiki. Each one had different proposals. The dapp is currently querying the events from the most recent [Sovryn governor](https://docs.google.com/spreadsheets/d/1SSqQJ4HNrIo8jRghKBa4ao_aAt4TJxP7jafRV-l0YcM/edit#gid=294704344&range=B99) contract address : <strong>0xfF25f66b7D7F385503D70574AE0170b6B1622dAd</strong>. We could maybe in the future make the dapp query all 3 contracts for the events if required.
 
 ```
 The Delegator Score is just static for now. This score needs to be calculated later from the Proof of Knowledge Protocol detailed below.

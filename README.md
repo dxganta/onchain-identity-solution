@@ -9,7 +9,7 @@ To tackle this problem, I first asked myself a simple question:
 
 ## Solutions
 ### For #1 & #2
-For the first 2 problems, I built a dapp which queries the blockchain for the "ProposalCreated" & "VoteCast" events emitted by the Sovryn's Governor contract and shows them in a simple frontend. The user is able to search by delegator address.
+For the first 2 problems, I built a dapp which queries the blockchain for the Proposals Created & the Votes Cast by a delegator and shows them in a simple frontend. The user is able to search by delegator address.
 
 ### For #3
 But the 3rd problem is a little tricky. How do you figure out how knowledgable someone is about the Sovryn Protocol? <br>Well, back in school, how did our teachers figure out who is good in mathematics and who is bad?<br> Tests right!!!<br> And thats the path I took. Tests, But on the BLOCKCHAIN!<br> 
@@ -167,3 +167,9 @@ After every test finishes, a new owner will be chosen at random from these board
 
 New board members can be added only by the approval of all the current board members. First each board member has to vote the new member individually using the <strong>voteNewMember(address newMember)</strong> function.<br>
 Then if all the board members have approved the new member, he/she can be added to the board members array using the <strong>addNewMember(address newMember)</strong> function.
+
+## Future Improvement Plans
+### For Dapp
+1. Alongwith the proposals created by a delegator, it would not be a bad idea to also show the "yes" & "no" votes for that proposal.
+2. For the votes cast by a delegator, it would be better to also show the final votes that the proposal got. This would give a user information about whether the delegator voted on the side that won or not.
+3. Also, after (or if) integrating Proof of Knowledge into Sovryn Protocol, we can show the Delegator Score in the Dapp Frontend. Thus, the dapp frontend will be a one-stop destination for an <strong>ONCHAIN PSEUDONYMOUS IDENTITY</strong> for a delegator.

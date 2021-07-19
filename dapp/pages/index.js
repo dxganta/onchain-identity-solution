@@ -70,7 +70,7 @@ function Home({ proposalCreateObjects, proposalVoteObjects }) {
       {/* top black bar */}
       <div className='bg-black h-20'></div>
       {/* delegate search bar & button  */}
-      <div className='container mx-auto'>
+      <div className='md:container md:mx-auto mx-7'>
         <form className='mt-8' onSubmit={onSubmit}>
           <input
             value={address}
